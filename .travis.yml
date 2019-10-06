@@ -1,0 +1,22 @@
+sudo: required
+services:
+  - docker
+
+before_install:
+  - docker build -t naregb/react-test -f ./client/Dockerfile.dev ./client
+
+script:
+  - docker run naregb/react-test npm test -- --coverage
+
+after_success:
+  - docker build -t naregb/multi-client ./client
+  - docker build -t naregb/multi-nginx ./nginx
+  - docker build -t naregb/multi-server ./server
+  - docker build -t naregb/multi-worker ./worker
+  # Log in to the CLI
+  - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_ID" --password-stdin
+  # Take those images and push them to docker hub
+  - docker push naregb/multi-client
+  - docker push naregb/multi-nginx
+  - docker push naregb/multi-server
+  - docker push naregb/multi-worker
